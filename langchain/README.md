@@ -47,12 +47,12 @@ Work through the materials in this order. Each notebook has a companion `.md` de
                                        │ (the conceptual map)     │
                                        └──────────┬───────────────┘
                                                   │
-        ┌────────────────────┬────────────────────┼──────────────────────┐
-        ▼                    ▼                    ▼                      ▼
-┌───────────────┐  ┌───────────────────────┐  ┌──────────────┐  ┌──────────────────┐
-│ 01_intro      │→ │ 02_model_integration  │→ │ 03_tools     │→ │ 04_messages      │
-│ + 01_intro.md │  │ + ..._integration.md  │  │ + 03_tools.md│  │ + 04_messages.md │
-└───────────────┘  └───────────────────────┘  └──────────────┘  └──────────────────┘
+        ┌────────────────────┬────────────────────┼──────────────────────┬──────────────────┐
+        ▼                    ▼                    ▼                      ▼                  ▼
+┌───────────────┐  ┌───────────────────────┐  ┌──────────────┐  ┌──────────────────┐  ┌───────────────────┐
+│ 01_intro      │→ │ 02_model_integration  │→ │ 03_tools     │→ │ 04_messages      │→ │ 06_middleware     │
+│ + 01_intro.md │  │ + ..._integration.md  │  │ + 03_tools.md│  │ + 04_messages.md │  │ + 06_middleware.md│
+└───────────────┘  └───────────────────────┘  └──────────────┘  └──────────────────┘  └───────────────────┘
 ```
 
 | # | Notebook | Companion deep-dive | One-line summary |
@@ -62,6 +62,7 @@ Work through the materials in this order. Each notebook has a companion `.md` de
 | 2 | [`02_model_integration.ipynb`](./02_model_integration.ipynb) | [`02_model_integration.md`](./02_model_integration.md) | Invoke / stream / batch, with the unified `init_chat_model` interface. |
 | 3 | [`03_tools.ipynb`](./03_tools.ipynb) | [`03_tools.md`](./03_tools.md) | `@tool`, `bind_tools`, and the manual tool-call loop. |
 | 4 | [`04_messages.ipynb`](./04_messages.ipynb) | [`04_messages.md`](./04_messages.md) | The message schema: System, Human, AI, Tool — and how `tool_call_id` links them. |
+| 6 | [`06_middleware.ipynb`](./06_middleware.ipynb) | [`06_middleware.md`](./06_middleware.md) | `SummarizationMiddleware` + `HumanInTheLoopMiddleware`: pause, summarise, approve / edit / reject. |
 
 ---
 
@@ -75,6 +76,7 @@ The notebooks deliberately mix providers to teach the unified interface. Each no
 | `02_model_integration` | mixed | qwen-3-32b (Groq) + gemini-2.5-flash + gemini-2.5-flash-lite | Demonstrates the *same* `.invoke()` across providers. |
 | `03_tools` | `groq` | `qwen/qwen3-32b` | Groq exposes `reasoning_content` so you can see the model's tool-call thinking. |
 | `04_messages` | `groq` | `qwen/qwen3-32b` | Continuity with `03_tools`. |
+| `06_middleware` | `groq` | `qwen/qwen3-32b` | Same model used as agent **and** as the summariser inside `SummarizationMiddleware`. |
 
 ---
 

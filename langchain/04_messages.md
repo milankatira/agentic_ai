@@ -140,4 +140,4 @@ Pulls back the curtain on `additional_kwargs`. Useful awareness, not application
 
 - [`langchain_theory.md` §4](./langchain_theory.md#4-message-lifecycle--schema) — message schema in conceptual form.
 - [`03_tools.md`](./03_tools.md) — how `tool_call_id` is generated and consumed in a real loop.
-- Course complete — see the bottom of [`README.md`](./README.md) for follow-on topics (structured output, RAG, LangGraph, LangSmith).
+- Next: [`06_middleware.ipynb`](./06_middleware.ipynb) — middleware that wraps the agent loop (summarisation + human-in-the-loop approval).

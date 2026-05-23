@@ -275,7 +275,77 @@ For everything else, prefer `create_agent` — less code, fewer footguns.
 
 ---
 
-## 7. Provider Map (used in these notebooks)
+## 7. Middleware: Intercepting Agent Behaviour
+
+Sometimes you need to change what the agent does **without** rewriting the agent. That's what middleware is for: plug-ins that wrap the state graph at specific points.
+
+```mermaid
+graph TD
+    Start([START]) --> Pre[pre-model middleware<br/>e.g. SummarizationMiddleware]
+    Pre --> Model[model node]
+    Model --> Gate[between-model-and-tools middleware<br/>e.g. HumanInTheLoopMiddleware]
+    Gate --> Tools[tools node]
+    Tools --> Pre
+    Gate -- no tool calls --> End([END])
+```
+
+You pass middleware to `create_agent`; the wiring is automatic:
+
+```python
+from langchain.agents import create_agent
+from langchain.agents.middleware import SummarizationMiddleware, HumanInTheLoopMiddleware
+from langgraph.checkpoint.memory import InMemorySaver
+
+agent = create_agent(
+    model="groq:qwen/qwen3-32b",
+    tools=[...],
+    checkpointer=InMemorySaver(),
+    middleware=[
+        SummarizationMiddleware(model="groq:qwen/qwen3-32b", trigger=("messages", 10), keep=("messages", 4)),
+        HumanInTheLoopMiddleware(interrupt_on={"send_email_tool": {"allowed_decisions": ["approve", "edit", "reject"]}}),
+    ],
+)
+```
+
+### Two built-ins worth knowing
+
+| Middleware | Purpose | Resume mechanism |
+|---|---|---|
+| `SummarizationMiddleware` | Auto-compresses long history when a `messages` / `tokens` / `fraction` trigger fires. | None — runs invisibly. |
+| `HumanInTheLoopMiddleware` | Pauses before configured tool calls so you can `approve` / `edit` / `reject` them. | `Command(resume={"decisions": [...]})` |
+
+### Why a checkpointer is mandatory
+
+Stateful middleware needs the graph's state to survive across `.invoke()` calls. A **checkpointer** persists state under a `thread_id`; on the next invoke with the same id, the state is rehydrated. `InMemorySaver` is fine for notebooks; production uses `SqliteSaver` / `PostgresSaver`.
+
+```python
+config = {"configurable": {"thread_id": "user-42-chat"}}
+agent.invoke({"messages": [...]}, config)  # saves under thread "user-42-chat"
+agent.invoke({"messages": [...]}, config)  # picks up from saved state
+```
+
+### The interrupt / resume pattern
+
+For human-in-the-loop, `agent.invoke(...)` may return early with an `__interrupt__` key. You inspect the pending tool call, decide, and resume:
+
+```python
+from langgraph.types import Command
+
+result = agent.invoke({"messages": [HumanMessage("Send email...")]}, config)
+
+if "__interrupt__" in result:
+    # show result["messages"][-1].tool_calls to a human
+    result = agent.invoke(
+        Command(resume={"decisions": [{"type": "approve"}]}),
+        config,
+    )
+```
+
+→ See `06_middleware.ipynb` and `06_middleware.md`.
+
+---
+
+## 8. Provider Map (used in these notebooks)
 
 | Notebook | Provider | Model | Why this provider |
 |---|---|---|---|
@@ -283,6 +353,7 @@ For everything else, prefer `create_agent` — less code, fewer footguns.
 | `02_model_integration` | mixed | qwen-3-32b (Groq) + gemini-2.5-flash + gemini-2.5-flash-lite | The point of the notebook is to show the *same* unified interface across providers. |
 | `03_tools` | `groq` | `qwen/qwen3-32b` | Groq returns visible `reasoning_content`, so you can read the model's tool-call thinking. |
 | `04_messages` | `groq` | `qwen/qwen3-32b` | Same provider as `03_tools`, so message-flow examples carry over without retraining your eyes. |
+| `06_middleware` | `groq` | `qwen/qwen3-32b` | Used both as the agent's primary model and as the summariser inside `SummarizationMiddleware`. |
 
 ### Provider-specific quirks to know
 
@@ -293,7 +364,7 @@ For everything else, prefer `create_agent` — less code, fewer footguns.
 
 ---
 
-## 8. Glossary
+## 9. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -307,6 +378,10 @@ For everything else, prefer `create_agent` — less code, fewer footguns.
 | **`tool_call_id`** | The string that links an `AIMessage`'s tool request to the `ToolMessage` carrying its result. |
 | **`additional_kwargs`** | Provider-specific extras on a message — reasoning traces, safety flags, function-call signatures. |
 | **`response_metadata`** | Standard-ish metadata: token usage, finish reason, model name, model provider. |
+| **Middleware** | A plug-in that wraps the agent's state graph (e.g. `SummarizationMiddleware`, `HumanInTheLoopMiddleware`). |
+| **Checkpointer** | Persists graph state across `.invoke()` calls. Required for stateful middleware. |
+| **`thread_id`** | Conversation identifier passed via `config["configurable"]["thread_id"]`. Same id = same conversation. |
+| **`__interrupt__`** | Key in the agent's response that signals a pause (used by human-in-the-loop). Resumed via `Command(resume={...})`. |
 
 ---
 
@@ -317,3 +392,4 @@ For everything else, prefer `create_agent` — less code, fewer footguns.
 - **`02_model_integration.ipynb` + `02_model_integration.md`** — invoke / stream / batch in depth.
 - **`03_tools.ipynb` + `03_tools.md`** — `@tool`, `bind_tools`, the manual execution loop.
 - **`04_messages.ipynb` + `04_messages.md`** — the message schema and how the tool-call link works in practice.
+- **`06_middleware.ipynb` + `06_middleware.md`** — middleware: summarisation + human-in-the-loop approval.
