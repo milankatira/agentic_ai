@@ -30,7 +30,7 @@ async def main():
 
     agent=create_react_agent(model, tools, prompt="You are a helpful assistant")
 
-    math_response=await agent.ainvoke({"messages": [{"role":"user", "content": "what's (3+5)*7?"}]})
+    math_response=await agent.ainvoke({"messages": [{"role":"user", "content": "what's (3+5) x 2?"}]})
     print("\n\nMath Response: \n\n", math_response['messages'][-1].content)
 
     weather_response=await agent.ainvoke({"messages": [{"role":"user", "content": "what is the weather in San Francisco?"}]})
