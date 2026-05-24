@@ -13,10 +13,12 @@ dependencies = [
     "langchain-core>=1.4.0",
     "langchain-groq>=1.1.2",
     "langchain-openai>=1.2.2",
+    "langchain-text-splitters>=1.0.0",
     "langgraph>=1.2.1",
     "pymupdf>=1.27.2.3",
     "pypdf>=6.12.1",
     "python-dotenv>=1.2.2",
+    "scikit-learn>=1.5.0",
     "sentence-transformers>=5.5.1",
     "typesense>=2.0.0",
 ]
